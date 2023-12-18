@@ -1,0 +1,99 @@
+#!/bin/bash
+
+ID=$(id -u)
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+MONGODB_HOST=mongodb.daws76.site
+
+TIMESTAMP=$(date +%F-%H-%M-%S)
+LOGFILE="/tmp/$0-$TIMESTAMP.log"
+
+
+echo "Script started executing at $TIMESTAMP" &>> $LOGFILE 
+
+VALIDATE(){
+  if [ $1 -ne 0 ]
+  then 
+    echo -e "$2 .. $R Failed $N"
+  else 
+    echo -e "$2 .. $G Success $N"  
+   fi    
+} 
+
+if [ $ID -ne 0 ]
+then 
+  echo -e "$R Error please run with root user $N"
+  exit 1
+else
+  echo "you are root user"
+fi
+
+dnf module disable nodejs -y &>> $LOGFILE
+
+VALIDATE $? "Disabling current Nodejs"
+
+dnf module enable nodejs:18 -y &>> $LOGFILE
+
+VALIDATE $? "Enabling current Nodejs"
+
+dnf install nodejs -y &>> $LOGFILE
+
+VALIDATE $? "Installing  current version Nodejs18"
+
+useradd roboshop &>> $LOGFILE
+
+VALIDATE $? "Creating  roboshop user"
+
+mkdir /app &>> $LOGFILE
+
+VALIDATE $? "Creating  app directory"
+
+curl -o /tmp/catalogue.zip https://roboshop-builds.s3.amazonaws.com/catalogue.zip &>> $LOGFILE
+
+VALIDATE $? "Downloading catalouge applicaion"
+
+cd /app &>> $LOGFILE
+
+unzip /tmp/catalogue.zip &>> $LOGFILE
+
+VALIDATE $? "Unziping catalogue"
+
+npm install &>> $LOGFILE
+
+VALIDATE $? "Installing dependencies"
+
+cp /home/centos/roboshop-shell/catalogue.service /etc/systemd/system/catalogue.service &>> $LOGFILE
+
+VALIDATE $? "Copying catalogue service file"
+
+systemctl daemon-reload &>> $LOGFILE
+
+VALIDATE $? "catalogue daemon reload"
+
+systemctl enable catalogue &>> $LOGFILE
+
+VALIDATE $? "Enabling catalogue"
+
+systemctl start catalogue &>> $LOGFILE
+
+VALIDATE $? "Starting catalogue"
+
+cp /home/centos/roboshop-shell/mongo.repo /etc/yum.repos.d/mongo.repo &>> $LOGFILE
+
+VALIDATE $? "Copying mongorepo"
+
+dnf install mongodb-org-shell -y &>> $LOGFILE
+
+VALIDATE $? "Installing mongodb client"
+
+mongo --host $MONGODB_HOST </app/schema/catalogue.js &>> $LOGFILE
+
+VALIDATE $? "Loading catalogue data to mongodb"
+
+
+
+
+
+
