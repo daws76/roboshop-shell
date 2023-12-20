@@ -74,9 +74,9 @@ VALIDATE $? "Daemon reload"
 
 systemctl enable payment &>> $LOGFILE
 
-VALIDATE $? "Enable payment"
+VALIDATE $? "Enabling payment"
 
 systemctl start payment &>> $LOGFILE
 
-VALIDATE $? "Start payment"
+VALIDATE $? "Starting payment"
 
